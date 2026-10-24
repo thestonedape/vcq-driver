@@ -1,0 +1,2 @@
+obj-m := vcq.o
+ccflags-y := -I$(src)/../include/uapi

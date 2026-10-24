@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  host-kernel:
+    name: Test on the runner's kernel
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kernel headers
+        run: sudo apt-get update && sudo apt-get install -y "linux-headers-$(uname -r)"
+      - name: Build module and tests
+        run: make
+      - name: Load module, run tests and benchmark, unload
+        run: |
+          sudo insmod driver/vcq.ko
+          sudo build/vcq_test
+          sudo build/vcq_bench
+          sudo rmmod vcq
+      - name: Check kernel log for warnings
+        run: |
+          sudo dmesg | tail -n 20
+          if sudo dmesg | grep -E 'BUG:|WARNING:|Oops|INFO: task|refcount_t'; then exit 1; fi
+
+  qemu:
+    name: Boot Ubuntu 24.04 kernel under QEMU
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Allow KVM access
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm || true
+      - run: docker build -t vcq-dev tools
+      - name: Run tests in QEMU
+        run: |
+          kvm=""
+          if [ -e /dev/kvm ]; then kvm="--device /dev/kvm"; fi
+          docker run --rm $kvm -v "$PWD:/src" vcq-dev sh tools/qemu-test.sh
+
+  checkpatch:
+    name: Kernel coding style
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: checkpatch.pl (Linux v6.12)
+        run: |
+          curl -fsSLo checkpatch.pl https://raw.githubusercontent.com/torvalds/linux/v6.12/scripts/checkpatch.pl
+          perl checkpatch.pl --no-tree --strict -f driver/vcq.c include/uapi/vcq.h
