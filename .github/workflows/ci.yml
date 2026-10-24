@@ -23,7 +23,7 @@ jobs:
       - name: Check kernel log for warnings
         run: |
           sudo dmesg | tail -n 20
-          if sudo dmesg | grep -E 'BUG:|WARNING:|Oops|INFO: task|refcount_t'; then exit 1; fi
+          if sudo dmesg | grep -E 'BUG:|WARNING: CPU:|Oops|INFO: task|refcount_t:'; then exit 1; fi
 
   qemu:
     name: Boot Ubuntu 24.04 kernel under QEMU

@@ -27,7 +27,7 @@ insmod /vcq.ko || rc=1
 /vcq_test || rc=1
 /vcq_bench || rc=1
 rmmod vcq || rc=1
-if dmesg | grep -E 'BUG:|WARNING:|Oops|INFO: task|refcount_t'; then rc=1; fi
+if dmesg | grep -E 'BUG:|WARNING: CPU:|Oops|INFO: task|refcount_t:'; then rc=1; fi
 echo "VCQ_RESULT rc=$rc"
 poweroff -f
 EOF

@@ -91,7 +91,7 @@ make qemu-test      # builds in Docker, boots Ubuntu 24.04's kernel in QEMU
 
 The QEMU harness builds the module against the image's kernel, boots it with
 a busybox initramfs, runs the tests and benchmark as root, unloads the module
-and fails if the kernel log contains `BUG`, `WARNING`, `Oops` or hung-task
+and fails if the kernel log contains `BUG`, a `WARNING: CPU:` splat, `Oops` or hung-task
 reports. CI runs the same harness, the tests on the GitHub runner's own
 kernel, and `checkpatch.pl --strict`.
 
